@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:journal_project/models/journal.dart';
 import 'package:journal_project/models/journal_dto.dart';
+import 'package:journal_project/providers/journal_provider.dart';
 import 'package:journal_project/services/sql_helper.dart';
+import 'package:provider/provider.dart';
 
 class CreateOrUpdatePage extends StatefulWidget {
-  final String? id;
-  const CreateOrUpdatePage({Key? key, required this.id}) : super(key: key);
+  final Journal? journal;
+  const CreateOrUpdatePage({Key? key, required this.journal}) : super(key: key);
 
   @override
   CreateOrUpdatePageState createState() => CreateOrUpdatePageState();
@@ -23,34 +26,36 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
 
   // Insert a new journal to the database
   Future<void> _addEntry() async {
-    await SQLHelper.createEntry(JournalDTO.from({
-      'title': _titleController.text,
-      'mood': _moodController.text,
-      'description': _descriptionController.text
-    }));
-    // _refreshJournals();
+    await SQLHelper.createEntry(JournalDTO(
+        title: _titleController.text,
+        mood: _moodController.text,
+        description: _descriptionController.text));
+    await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
   // Update an existing journal
   Future<void> _updateEntry(int id) async {
-    await SQLHelper.updateEntry(Journal.from({
-      'id': id,
-      'title': _titleController.text,
-      'mood': _moodController.text,
-      'description': _descriptionController.text
-    }));
-    // _refreshJournals();
+    await SQLHelper.updateEntry(
+        id,
+        JournalDTO(
+            title: _titleController.text,
+            mood: _moodController.text,
+            description: _descriptionController.text));
+    await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
   @override
   Widget build(BuildContext context) {
     int? id;
-    if (widget.id != null && widget.id != '') {
-      id = int.parse(widget.id!);
+    if (widget.journal != null) {
+      id = widget.journal!.id;
+      _titleController.text = widget.journal!.title;
+      _moodController.text = widget.journal!.mood;
+      _descriptionController.text = widget.journal!.description;
     }
     return Scaffold(
         appBar: AppBar(
-          title: const Text('SQL'),
+          title: const Text('Journal App'),
         ),
         body: Column(
           mainAxisSize: MainAxisSize.min,
@@ -95,9 +100,8 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
 
                 // Close the bottom sheet
                 await Future.delayed(const Duration(seconds: 1));
-
                 if (!context.mounted) return;
-                Navigator.of(context).pop();
+                GoRouter.of(context).pop();
                 // _refreshJournals();
               },
               child: Text(id == null ? 'Create New' : 'Update'),

@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:journal_project/models/journal.dart';
 import 'package:journal_project/models/journal_dto.dart';
+import 'package:journal_project/providers/journal_provider.dart';
 import 'package:journal_project/services/sql_helper.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -13,67 +15,12 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  // All journals
-  List<Map<String, dynamic>> _journals = [];
-
-  bool _isLoading = true;
-
-  // This function is used to fetch all data from the database
-  void _refreshJournals() async {
-    final data = await SQLHelper.getEntries();
-    setState(() {
-      _journals = data;
-      _isLoading = false;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    _refreshJournals(); // Loading the journals when the app starts
-  }
-
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _moodController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-
-  // This function will be triggered when the floating button is pressed
-  // It will also be triggered when you want to update an item
-  void _showForm(int? id) async {
-    if (id != null) {
-      // id == null -> create new item
-      // id != null -> update an existing item
-      final existingJournal =
-          _journals.firstWhere((element) => element['id'] == id);
-      _titleController.text = existingJournal['title'];
-      _moodController.text = existingJournal['mood'];
-      _descriptionController.text = existingJournal['description'];
-    }
-
-    GoRouter.of(context).pushNamed('createorupdate');
-
-    _refreshJournals();
-  }
-
-// Insert a new journal to the database
-  Future<void> _addEntry() async {
-    await SQLHelper.createEntry(JournalDTO.from({
-      'title': _titleController.text,
-      'mood': _moodController.text,
-      'description': _descriptionController.text
-    }));
-    _refreshJournals();
-  }
-
-  // Update an existing journal
-  Future<void> _updateEntry(int id) async {
-    await SQLHelper.updateEntry(Journal.from({
-      'id': id,
-      'title': _titleController.text,
-      'mood': _moodController.text,
-      'description': _descriptionController.text
-    }));
-    _refreshJournals();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      Provider.of<JournalProvider>(context, listen: false).getAllJournals();
+    });
   }
 
   // Delete a journal
@@ -84,53 +31,102 @@ class HomePageState extends State<HomePage> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Successfully deleted a journal!'),
     ));
-    _refreshJournals();
+    Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SQL'),
+        title: const Text('Journal App'),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : ListView.builder(
-              itemCount: _journals.length,
-              itemBuilder: (context, index) => Card(
-                color: Colors.orange[200],
-                margin: const EdgeInsets.all(15),
-                child: ListTile(
-                    //TODO: the time is +4 hours
-                    title: Text(DateFormat.yMd()
-                        .add_jm()
-                        .format(DateTime.parse(_journals[index]['timestamp']))
-                        .toString()),
-                    subtitle: Text(_journals[index]['title']),
-                    trailing: SizedBox(
-                      width: 100,
-                      child: Row(
+      body: Consumer<JournalProvider>(
+        builder: (context, value, child) {
+          if (value.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final journals = value.journals;
+          return ListView.builder(
+              itemCount: journals.length,
+              itemBuilder: (context, index) {
+                final journal = journals[index];
+                return Card(
+                    color: Colors.orange[200],
+                    child: ListTile(
+                      leading: Column(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => _showForm(_journals[index]['id']),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () =>
-                                _deleteEntry(_journals[index]['id']),
-                          ),
+                          CircleAvatar(
+                              child: Text(DateFormat.Md()
+                                  .format(DateTime.parse(journal.timestamp))
+                                  .toString())),
+                          Text(DateFormat.jm()
+                              .format(DateTime.parse(journal.timestamp))
+                              .toString())
                         ],
                       ),
-                    )),
-              ),
-            ),
+                      title: Text(journal.title),
+                      subtitle: Text(journal.mood),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => GoRouter.of(context)
+                            .pushNamed('createorupdate', extra: journal),
+                      ),
+                    ));
+              });
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => _showForm(null),
+        onPressed: () =>
+            GoRouter.of(context).pushNamed('createorupdate', extra: null),
       ),
     );
   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text('Journal App'),
+//       ),
+//       body: _isLoading
+//           ? const Center(
+//               child: CircularProgressIndicator(),
+//             )
+//           : ListView.builder(
+//               itemCount: _journals.length,
+//               itemBuilder: (context, index) => Card(
+//                 color: Colors.orange[200],
+//                 margin: const EdgeInsets.all(15),
+//                 child: ListTile(
+//                     //TODO: the time is +5 hours --> convert to local timezone
+//                     title: Text(DateFormat.yMd()
+//                         .add_jm()
+//                         .format(DateTime.parse(_journals[index].timestamp))
+//                         .toString()),
+//                     subtitle: Text(_journals[index].title),
+//                     trailing: SizedBox(
+//                       width: 100,
+//                       child: Row(
+//                         children: [
+//                           IconButton(
+//                             icon: const Icon(Icons.edit),
+//                             onPressed: () =>
+//                                 _showJournalForm(_journals[index].id),
+//                           ),
+//                           IconButton(
+//                             icon: const Icon(Icons.delete),
+//                             onPressed: () => _deleteEntry(_journals[index].id),
+//                           ),
+//                         ],
+//                       ),
+//                     )),
+//               ),
+//             ),
+//       floatingActionButton: FloatingActionButton(
+//         child: const Icon(Icons.add),
+//         onPressed: () => _showJournalForm(null),
+//       ),
+//     );
+//   }
 }
