@@ -15,20 +15,29 @@ class CreateOrUpdatePage extends StatefulWidget {
 }
 
 class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
+  String _dropdownValue = "Okay"; //necessary initializer
   @override
   void initState() {
     super.initState();
+    _dropdownValue = widget.journal == null ? "Okay" : widget.journal!.mood;
   }
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _moodController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
+  void dropdownCallback(String? value) {
+    if (value is String) {
+      setState(() {
+        _dropdownValue = value;
+      });
+    }
+  }
 
   // Insert a new journal to the database
   Future<void> _addEntry() async {
     await SQLHelper.createEntry(JournalDTO(
         title: _titleController.text,
-        mood: _moodController.text,
+        mood: _dropdownValue,
         description: _descriptionController.text));
     await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
@@ -39,10 +48,18 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
         id,
         JournalDTO(
             title: _titleController.text,
-            mood: _moodController.text,
+            mood: _dropdownValue,
             description: _descriptionController.text));
     await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
+
+  final moods = const [
+    DropdownMenuItem(value: "Awesome", child: Text("Awesome")),
+    DropdownMenuItem(value: "Good", child: Text("Good")),
+    DropdownMenuItem(value: "Okay", child: Text("Okay")),
+    DropdownMenuItem(value: "Bad", child: Text("Bad")),
+    DropdownMenuItem(value: "Terrible", child: Text("Terrible")),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +67,6 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
     if (widget.journal != null) {
       id = widget.journal!.id;
       _titleController.text = widget.journal!.title;
-      _moodController.text = widget.journal!.mood;
       _descriptionController.text = widget.journal!.description;
     }
     return Scaffold(
@@ -68,9 +84,17 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
             const SizedBox(
               height: 10,
             ),
-            TextField(
-              controller: _moodController,
-              decoration: const InputDecoration(hintText: 'Mood'),
+            DropdownButton(
+              items: const [
+                DropdownMenuItem(value: "Awesome", child: Text("Awesome")),
+                DropdownMenuItem(value: "Good", child: Text("Good")),
+                DropdownMenuItem(value: "Okay", child: Text("Okay")),
+                DropdownMenuItem(value: "Bad", child: Text("Bad")),
+                DropdownMenuItem(value: "Terrible", child: Text("Terrible")),
+              ],
+              value: _dropdownValue,
+              onChanged: dropdownCallback,
+              isExpanded: true,
             ),
             const SizedBox(
               height: 10,
@@ -84,7 +108,6 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Save new journal
                 if (id == null) {
                   await _addEntry();
                 }
@@ -93,16 +116,10 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
                   await _updateEntry(id);
                 }
 
-                // Clear the text fields
-                _titleController.text = '';
-                _moodController.text = '';
-                _descriptionController.text = '';
-
-                // Close the bottom sheet
+                // Return to previous page
                 await Future.delayed(const Duration(seconds: 1));
                 if (!context.mounted) return;
-                GoRouter.of(context).pop();
-                // _refreshJournals();
+                GoRouter.of(context).pop('update');
               },
               child: Text(id == null ? 'Create New' : 'Update'),
             )
