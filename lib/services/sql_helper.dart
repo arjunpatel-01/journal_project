@@ -31,10 +31,19 @@ class SQLHelper {
   }
 
   //Read all Journal Entries
-  //TODO: return List of Journals instead maybe
-  static Future<List<Map<String, dynamic>>> getEntries() async {
+  static Future<List<Journal>> getEntries() async {
     final db = await SQLHelper.db();
-    return db.query('entries', orderBy: "timestamp");
+    List<Map<String, dynamic>> response =
+        await db.query('entries', orderBy: "timestamp DESC");
+    List<Journal> journals = response.map((j) {
+      return Journal(
+          id: j['id'],
+          title: j['title'],
+          mood: j['mood'],
+          description: j['description'],
+          timestamp: j['timestamp']);
+    }).toList();
+    return journals;
   }
 
   //Read single Journal Entry
@@ -46,12 +55,12 @@ class SQLHelper {
   }
 
   //Update single Journal Entry
-  static Future<int> updateEntry(Journal journal) async {
+  static Future<int> updateEntry(int id, JournalDTO journalDTO) async {
     final db = await SQLHelper.db();
-    final data = journal.toJson();
-    final id = await db
-        .update('entries', data, where: "id = ?", whereArgs: [journal.id]);
-    return id;
+    final data = journalDTO.toJson();
+    final changes =
+        await db.update('entries', data, where: "id = ?", whereArgs: [id]);
+    return changes;
   }
 
   //Delete single Journal Entry
