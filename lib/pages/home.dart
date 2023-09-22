@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:journal_project/models/journal.dart';
-import 'package:journal_project/models/journal_dto.dart';
 import 'package:journal_project/providers/journal_provider.dart';
 import 'package:journal_project/services/sql_helper.dart';
 import 'package:provider/provider.dart';
@@ -53,25 +51,25 @@ class HomePageState extends State<HomePage> {
                 return Card(
                     color: Colors.orange[200],
                     child: ListTile(
-                      leading: Column(
-                        children: [
-                          CircleAvatar(
-                              child: Text(DateFormat.Md()
-                                  .format(DateTime.parse(journal.timestamp))
-                                  .toString())),
-                          Text(DateFormat.jm()
-                              .format(DateTime.parse(journal.timestamp))
-                              .toString())
-                        ],
-                      ),
-                      title: Text(journal.title),
-                      subtitle: Text(journal.mood),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => GoRouter.of(context)
-                            .pushNamed('createorupdate', extra: journal),
-                      ),
-                    ));
+                        leading: Column(
+                          children: [
+                            CircleAvatar(
+                                child: Text(DateFormat.Md()
+                                    .format(DateTime.parse(journal.timestamp))
+                                    .toString())),
+                            Text(DateFormat.jm()
+                                .format(DateTime.parse(journal.timestamp))
+                                .toString())
+                          ],
+                        ),
+                        title: Text(journal.title),
+                        subtitle: Text(journal.mood),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteEntry(journal.id),
+                        ),
+                        onTap: () => GoRouter.of(context)
+                            .pushNamed('journalentry', extra: journal)));
               });
         },
       ),
