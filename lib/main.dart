@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'Journal App',
           theme: ThemeData(
-            primarySwatch: Colors.orange,
+            primarySwatch: Colors.pink,
           ),
           routerConfig: MyAppRouter().router,
         ));
