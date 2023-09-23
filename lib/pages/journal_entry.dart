@@ -28,7 +28,7 @@ class JournalEntryPageState extends State<JournalEntryPage> {
                 .format(DateTime.parse(journal.timestamp))
                 .toString())),
         Text(DateFormat.jm()
-            .format(DateTime.parse(journal.timestamp))
+            .format(DateTime.parse('${journal.timestamp}+00').toLocal())
             .toString()),
         Text(journal.title),
         Text(journal.mood),
@@ -38,6 +38,7 @@ class JournalEntryPageState extends State<JournalEntryPage> {
             onPressed: () async {
               String? val = await GoRouter.of(context)
                   .pushNamed('createorupdate', extra: journal);
+              if (!context.mounted) return;
               if (val == 'update') GoRouter.of(context).pop();
             }),
       ]),
