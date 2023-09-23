@@ -39,6 +39,7 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
         title: _titleController.text,
         mood: _dropdownValue,
         description: _descriptionController.text));
+    if (!context.mounted) return;
     await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
@@ -50,15 +51,26 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
             title: _titleController.text,
             mood: _dropdownValue,
             description: _descriptionController.text));
+    if (!context.mounted) return;
     await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
   final moods = const [
-    DropdownMenuItem(value: "Awesome", child: Text("Awesome")),
-    DropdownMenuItem(value: "Good", child: Text("Good")),
-    DropdownMenuItem(value: "Okay", child: Text("Okay")),
-    DropdownMenuItem(value: "Bad", child: Text("Bad")),
-    DropdownMenuItem(value: "Terrible", child: Text("Terrible")),
+    DropdownMenuItem(
+        value: "Awesome",
+        child: Text("Awesome", style: TextStyle(color: Colors.green))),
+    DropdownMenuItem(
+        value: "Good",
+        child: Text("Good", style: TextStyle(color: Colors.teal))),
+    DropdownMenuItem(
+        value: "Okay",
+        child: Text("Okay", style: TextStyle(color: Colors.brown))),
+    DropdownMenuItem(
+        value: "Bad",
+        child: Text("Bad", style: TextStyle(color: Colors.orange))),
+    DropdownMenuItem(
+        value: "Terrible",
+        child: Text("Terrible", style: TextStyle(color: Colors.red))),
   ];
 
   @override
@@ -73,57 +85,56 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
         appBar: AppBar(
           title: const Text('Journal App'),
         ),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(hintText: 'Title'),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            DropdownButton(
-              items: const [
-                DropdownMenuItem(value: "Awesome", child: Text("Awesome")),
-                DropdownMenuItem(value: "Good", child: Text("Good")),
-                DropdownMenuItem(value: "Okay", child: Text("Okay")),
-                DropdownMenuItem(value: "Bad", child: Text("Bad")),
-                DropdownMenuItem(value: "Terrible", child: Text("Terrible")),
-              ],
-              value: _dropdownValue,
-              onChanged: dropdownCallback,
-              isExpanded: true,
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(hintText: 'Description'),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (id == null) {
-                  await _addEntry();
-                }
+        body: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              DropdownButtonFormField(
+                  items: moods,
+                  value: _dropdownValue,
+                  onChanged: dropdownCallback,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Mood')),
+              const SizedBox(
+                height: 10,
+              ),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                minLines: 1,
+                maxLines: 10,
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (id == null) {
+                    await _addEntry();
+                  }
 
-                if (id != null) {
-                  await _updateEntry(id);
-                }
+                  if (id != null) {
+                    await _updateEntry(id);
+                  }
 
-                // Return to previous page
-                await Future.delayed(const Duration(seconds: 1));
-                if (!context.mounted) return;
-                GoRouter.of(context).pop('update');
-              },
-              child: Text(id == null ? 'Create New' : 'Update'),
-            )
-          ],
+                  // Return to previous page
+                  await Future.delayed(const Duration(seconds: 1));
+                  if (!context.mounted) return;
+                  GoRouter.of(context).pop('update');
+                },
+                child: Text(id == null ? 'Create New' : 'Update'),
+              )
+            ],
+          ),
         ));
   }
 }
