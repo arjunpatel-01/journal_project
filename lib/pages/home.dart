@@ -32,6 +32,14 @@ class HomePageState extends State<HomePage> {
     Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
 
+  final moodColors = const {
+    'Awesome': Colors.green,
+    'Good': Colors.teal,
+    'Okay': Colors.brown,
+    'Bad': Colors.orange,
+    'Terrible': Colors.red
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,21 +57,33 @@ class HomePageState extends State<HomePage> {
               itemBuilder: (context, index) {
                 final journal = journals[index];
                 return Card(
-                    color: Colors.orange[200],
+                    color: Colors.white70,
                     child: ListTile(
-                        leading: Column(
-                          children: [
-                            CircleAvatar(
-                                child: Text(DateFormat.Md()
-                                    .format(DateTime.parse(journal.timestamp))
-                                    .toString())),
-                            Text(DateFormat.jm()
-                                .format(DateTime.parse(journal.timestamp))
-                                .toString())
-                          ],
+                        leading: SizedBox(
+                          width: 70,
+                          child: Column(
+                            children: [
+                              CircleAvatar(
+                                  child: Text(DateFormat.Md()
+                                      .format(DateTime.parse(
+                                              "${journal.timestamp}+00")
+                                          .toLocal())
+                                      .toString())),
+                              Text(DateFormat.jm()
+                                  .format(
+                                      DateTime.parse("${journal.timestamp}+00")
+                                          .toLocal())
+                                  .toString())
+                            ],
+                          ),
                         ),
-                        title: Text(journal.title),
-                        subtitle: Text(journal.mood),
+                        title: Text(
+                          journal.title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.start,
+                        ),
+                        subtitle: Text(journal.mood,
+                            style: TextStyle(color: moodColors[journal.mood])),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () => _deleteEntry(journal.id),
