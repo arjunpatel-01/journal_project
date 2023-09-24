@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:journal_project/models/journal.dart';
 import 'package:journal_project/models/journal_dto.dart';
 import 'package:journal_project/providers/journal_provider.dart';
 import 'package:journal_project/services/sql_helper.dart';
+import 'package:journal_project/style/colors.dart';
 import 'package:provider/provider.dart';
 
 class CreateOrUpdatePage extends StatefulWidget {
@@ -34,43 +36,58 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
   }
 
   // Insert a new journal to the database
-  Future<void> _addEntry() async {
-    await SQLHelper.createEntry(JournalDTO(
-        title: _titleController.text,
-        mood: _dropdownValue,
-        description: _descriptionController.text));
-    if (!context.mounted) return;
-    await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
+  Future<bool> _addEntry() async {
+    if (_titleController.text.isNotEmpty &&
+        _descriptionController.text.isNotEmpty) {
+      await SQLHelper.createEntry(JournalDTO(
+          title: _titleController.text,
+          mood: _dropdownValue,
+          description: _descriptionController.text));
+      if (!context.mounted) return false;
+      await Provider.of<JournalProvider>(context, listen: false)
+          .getAllJournals();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   // Update an existing journal
-  Future<void> _updateEntry(int id) async {
-    await SQLHelper.updateEntry(
-        id,
-        JournalDTO(
-            title: _titleController.text,
-            mood: _dropdownValue,
-            description: _descriptionController.text));
-    if (!context.mounted) return;
-    await Provider.of<JournalProvider>(context, listen: false).getAllJournals();
+  Future<bool> _updateEntry(int id) async {
+    if (_titleController.text.isNotEmpty &&
+        _descriptionController.text.isNotEmpty) {
+      await SQLHelper.updateEntry(
+          id,
+          JournalDTO(
+              title: _titleController.text,
+              mood: _dropdownValue,
+              description: _descriptionController.text));
+      if (!context.mounted) return false;
+      await Provider.of<JournalProvider>(context, listen: false)
+          .getAllJournals();
+      return true;
+    } else {
+      return false;
+    }
   }
 
-  final moods = const [
+  final moods = [
     DropdownMenuItem(
         value: "Awesome",
-        child: Text("Awesome", style: TextStyle(color: Colors.green))),
+        child: Text("Awesome", style: TextStyle(color: moodColors['Awesome']))),
     DropdownMenuItem(
         value: "Good",
-        child: Text("Good", style: TextStyle(color: Colors.teal))),
+        child: Text("Good", style: TextStyle(color: moodColors['Good']))),
     DropdownMenuItem(
         value: "Okay",
-        child: Text("Okay", style: TextStyle(color: Colors.brown))),
+        child: Text("Okay", style: TextStyle(color: moodColors['Okay']))),
     DropdownMenuItem(
         value: "Bad",
-        child: Text("Bad", style: TextStyle(color: Colors.orange))),
+        child: Text("Bad", style: TextStyle(color: moodColors['Bad']))),
     DropdownMenuItem(
         value: "Terrible",
-        child: Text("Terrible", style: TextStyle(color: Colors.red))),
+        child:
+            Text("Terrible", style: TextStyle(color: moodColors['Terrible']))),
   ];
 
   @override
@@ -92,8 +109,12 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               TextField(
+                autofocus: true,
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+                inputFormatters: [LengthLimitingTextInputFormatter(50)],
+                minLines: 1,
+                maxLines: 2,
               ),
               const SizedBox(
                 height: 10,
@@ -118,18 +139,26 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
               ),
               ElevatedButton(
                 onPressed: () async {
+                  bool validate = true;
                   if (id == null) {
-                    await _addEntry();
+                    validate = await _addEntry();
                   }
 
                   if (id != null) {
-                    await _updateEntry(id);
+                    validate = await _updateEntry(id);
                   }
 
+                  if (validate == true) {
+                    await Future.delayed(const Duration(seconds: 1));
+                    if (!context.mounted) return;
+                    GoRouter.of(context).pop('update');
+                  } else {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Title and Description cannot be empty.'),
+                    ));
+                  }
                   // Return to previous page
-                  await Future.delayed(const Duration(seconds: 1));
-                  if (!context.mounted) return;
-                  GoRouter.of(context).pop('update');
                 },
                 child: Text(id == null ? 'Create New' : 'Update'),
               )
