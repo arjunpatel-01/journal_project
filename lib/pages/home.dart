@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:journal_project/providers/journal_provider.dart';
 import 'package:journal_project/services/sql_helper.dart';
 import 'package:provider/provider.dart';
+import 'package:journal_project/style/colors.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -31,14 +32,6 @@ class HomePageState extends State<HomePage> {
     ));
     Provider.of<JournalProvider>(context, listen: false).getAllJournals();
   }
-
-  final moodColors = const {
-    'Awesome': Colors.green,
-    'Good': Colors.teal,
-    'Okay': Colors.brown,
-    'Bad': Colors.orange,
-    'Terrible': Colors.red
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -100,51 +93,4 @@ class HomePageState extends State<HomePage> {
       ),
     );
   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Journal App'),
-//       ),
-//       body: _isLoading
-//           ? const Center(
-//               child: CircularProgressIndicator(),
-//             )
-//           : ListView.builder(
-//               itemCount: _journals.length,
-//               itemBuilder: (context, index) => Card(
-//                 color: Colors.orange[200],
-//                 margin: const EdgeInsets.all(15),
-//                 child: ListTile(
-//                     //TODO: the time is +5 hours --> convert to local timezone
-//                     title: Text(DateFormat.yMd()
-//                         .add_jm()
-//                         .format(DateTime.parse(_journals[index].timestamp))
-//                         .toString()),
-//                     subtitle: Text(_journals[index].title),
-//                     trailing: SizedBox(
-//                       width: 100,
-//                       child: Row(
-//                         children: [
-//                           IconButton(
-//                             icon: const Icon(Icons.edit),
-//                             onPressed: () =>
-//                                 _showJournalForm(_journals[index].id),
-//                           ),
-//                           IconButton(
-//                             icon: const Icon(Icons.delete),
-//                             onPressed: () => _deleteEntry(_journals[index].id),
-//                           ),
-//                         ],
-//                       ),
-//                     )),
-//               ),
-//             ),
-//       floatingActionButton: FloatingActionButton(
-//         child: const Icon(Icons.add),
-//         onPressed: () => _showJournalForm(null),
-//       ),
-//     );
-//   }
 }
