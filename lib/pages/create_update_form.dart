@@ -151,6 +151,7 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
                   if (validate == true) {
                     await Future.delayed(const Duration(seconds: 1));
                     if (!context.mounted) return;
+                    // Return to previous page
                     GoRouter.of(context).pop('update');
                   } else {
                     if (!context.mounted) return;
@@ -158,7 +159,6 @@ class CreateOrUpdatePageState extends State<CreateOrUpdatePage> {
                       content: Text('Title and Description cannot be empty.'),
                     ));
                   }
-                  // Return to previous page
                 },
                 child: Text(id == null ? 'Create New' : 'Update'),
               )
